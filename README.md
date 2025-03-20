@@ -48,3 +48,23 @@ So `jzcyikzimx.***.awsapprunner.com` would be `jzcyikzimx.us-east-1.awsapprunner
 
 
 ## Deep Dive
+The most important thing you need to know is the infrastructure provisioned in your AWS Account. The deployment started out by:
+1. Provisions an Elastic Container Registry (ECR) repository for your application images.
+2. Provisions a Virtual Private Cloud (VPC). This VPC has the 10.0.0.0/16 CIDR. The VPC spans three availability zones.
+3. A NAT Gateway is provision for all 3 availability zones in the VPC. This comes with an Elastic IP for each NAT Gateway.
+3. Provisions an RDS instance running MySQL 8.0. This RDS instance runs from a private subnet, hence its not reachable from the public internet.
+4. Stores the RDS credentials in AWS Secret Manager.
+5. Provisions the App Runner service and runs it from private subnets within the VPC.
+
+In essence there's a networking, data storage and app runner infrastructure that are provisioned in your AWS Account. Lets take a closer look at each infrastructure.
+
+### Networking
+As mentioned earlier, a VPC is provision in your AWS Account. Its given the CIDR of 10.0.0.0/16.
+There are three availability zones in this VPC. There are three subnets in each availability zone, the public subnet, private subnet, and private subnet with a NAT Gateway attached. Each subnet has a CIDR of /20.
+
+### Data Storage
+An RDS instance running MySQL 8.0 is provisioned. The credentials of the RDS instance is stored securely in AWS Secret Manager and are injected into your applications as environment variables.
+The RDS instance runs from a private subnet group in the VPC.
+
+### App Runner
+An App Runner service is provisioned to pull your application image from the ECR repository and run. The App Runner services is deployed in the private subnet with a NAT attached. This enables the App Runner service to connect to the public internet.
